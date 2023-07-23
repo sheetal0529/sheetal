@@ -1,0 +1,37 @@
+
+#include<iostream>
+#include<iostream>
+#include<thread>
+#include<vector>
+#include<future>
+#include<algorithm>
+using namespace std;
+void t1(vector<int>& vec) {
+sort(vec.begin(), vec.end());
+}
+void t2(vector<int>& vec) {
+sort(vec.begin(), vec.end(),greater<int>());
+}
+int main() {
+vector<int> myVector = {8, 4, 12, 6, 10, 2};
+cout << "Original Vector: ";
+for (int num : myVector) {
+cout << num << " ";
+}
+cout << endl;
+vector<int> vecAscending = myVector;
+t1(vecAscending);
+cout << "Sorted Vector in Ascending Order: ";
+for (int num : vecAscending) {
+std::cout << num << " ";
+}
+cout << endl;
+vector<int> vecDescending = myVector;
+t2(vecDescending);
+cout << "Sorted Vector in Descending Order: ";
+for (int num : vecDescending) {
+cout << num << " ";
+}
+cout << endl;
+return 0;
+}

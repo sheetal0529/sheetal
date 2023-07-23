@@ -1,0 +1,65 @@
+
+
+#include <iostream>
+
+#include <thread>
+
+#include <mutex>
+
+using namespace std;
+
+ 
+
+mutex mtx;
+
+ 
+
+void printEvenNumbers() {
+
+    for (int i = 2; i <= 20; i += 2) {
+
+        unique_lock<mutex> lock(mtx);
+
+        cout << "Even: " << i << endl;
+
+        lock.unlock();
+
+    }
+
+}
+
+ 
+
+void printOddNumbers() {
+
+    for (int i = 1; i <= 20; i += 2) {
+
+        unique_lock<mutex> lock(mtx);
+
+        cout << "Odd: " << i << endl;
+
+        lock.unlock();
+
+    }
+
+}
+
+ 
+
+int main() {
+
+    thread evenThread(printEvenNumbers);
+
+    thread oddThread(printOddNumbers);
+
+ 
+
+    evenThread.join();
+
+    oddThread.join();
+
+ 
+
+    return 0;
+
+}

@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+void addEdge(vector<vector<int>>& adjList, int u, int v) {
+    adjList[u].push_back(v);
+    adjList[v].push_back(u);
+}
+vector<int> bfs(const vector<vector<int>>& adjList, int start, int end) {
+    queue<int> q;
+    vector<bool> visited(adjList.size(), false);
+    vector<int> parent(adjList.size(), -1);
+
+ 
+
+    q.push(start);
+    visited[start] = true;
+
+ 
+
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
+
+ 
+
+        if (current == end) {
+            break;
+        }
+
+ 
+
+        for (int neighbor : adjList[current]) {
+            if (!visited[neighbor]) {
+                q.push(neighbor);
+                visited[neighbor] = true;
+                parent[neighbor] = current;
+            }
+        }
+    }
+    vector<int> shortestPath;
+    int current = end;
+    while (current != -1) {
+        shortestPath.push_back(current);
+        current = parent[current];
+    }
+    reverse(shortestPath.begin(), shortestPath.end());
+    return shortestPath;
+}
+int main()
+{
+    int vertices, edges;
+    cout << "Enter the number of vertices in the graph: ";
+    cin >> vertices;
+    cout << "Enter the number of edges in the graph: ";
+    cin >> edges;
+    vector<vector<int>> adjList(vertices);
+    cout << "Enter the edges (format: u v) where u and v are connected vertices:" <<endl;
+    for (int i = 0; i < edges; ++i) {
+        int u, v;
+        cin >> u >> v;
+        addEdge(adjList, u, v);
+    }
+    int start, end;
+    cout << "Enter the source and destination vertices to find the shortest path: ";
+    cin >> start >> end;
+    vector<int> shortestPath = bfs(adjList, start, end);
+    cout << "Shortest path from " << start << " to " << end << ": ";
+    for (int vertex : shortestPath) {
+    cout << vertex << " ";
+    }
+    cout <<endl;
+    return 0;
+}

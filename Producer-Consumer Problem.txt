@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
+#include <random>
+using namespace std;
+
+ 
+
+const int BUFFER_SIZE = 10; 
+const int NUM_PRODUCED = 100;
+const int NUM_CONSUMERS = 3;
+
+ 
+
+queue<int> buffer;
+mutex bufferMutex;
+condition_variable bufferEmptyCondVar;
+condition_variable bufferFullCondVar;
+
+ 
+
+bool isProducerDone = false;
+
+ 
+
+void producer() {
+    random_device rd;
+    mt19937 gen(rd());
+uniform_int_distribution<> dis(1, 100);
+
+ 
+
+    for (int i = 0; i < NUM_PRODUCED; ++i) {
+        int randomNumber = dis(gen);
+
+ 
+
+        unique_lock<mutex> lock(bufferMutex);
+        bufferFullCondVar.wait(lock, [] { return buffer.size() < BUFFER_SIZE; });
+
+ 
+
+        buffer.push(randomNumber);
+        cout << "Produced: " << randomNumber << endl;
+
+ 
+
+        bufferEmptyCondVar.notify_all();
+    }
+
+    {
+        lock_guard<mutex> lock(bufferMutex);
+        isProducerDone = true;
+    }
+
+    bufferEmptyCondVar.notify_all();
+}
+void consumer(int id) {
+    while (true) {
+        unique_lock<mutex> lock(bufferMutex);
+bufferEmptyCondVar.wait(lock, [] { return !buffer.empty() || isProducerDone; });
+if (!buffer.empty()) {
+            int num = buffer.front();
+            buffer.pop();
+            cout << "Consumer " << id << " consumed: " << num <<endl;
+            bufferFullCondVar.notify_all();
+        } else if (isProducerDone) {
+            break;
+        }
+    }
+}
+int main() {
+    vector<thread> consumerThreads;
+    thread producerThread(producer);
+    for (int i = 0; i < NUM_CONSUMERS; ++i) {
+        consumerThreads.emplace_back(consumer, i);
+    }
+
+    producerThread.join();
+    for (auto& consumerThread : consumerThreads) {
+        consumerThread.join();
+    }
+return 0;
+}

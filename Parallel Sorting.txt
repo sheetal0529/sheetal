@@ -1,0 +1,102 @@
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <thread>
+using namespace std;
+void quickSortSequential(vector<int>& arr) {
+    if (arr.size() <= 1)
+        return;
+
+    int pivot = arr[arr.size() / 2];
+    vector<int> left, middle, right;
+    for (int num : arr) {
+        if (num < pivot)
+            left.push_back(num);
+        else if (num == pivot)
+            middle.push_back(num);
+        else
+            right.push_back(num);
+    }
+
+    quickSortSequential(left);
+    quickSortSequential(right);
+
+    arr.clear();
+    arr.insert(arr.end(), left.begin(), left.end());
+    arr.insert(arr.end(), middle.begin(), middle.end());
+    arr.insert(arr.end(), right.begin(), right.end());
+}
+
+void quickSortParallel(vector<int>& arr, int depth) {
+    if (arr.size() <= 1)
+        return;
+
+    if (depth <= 0) {
+        quickSortSequential(arr);
+        return;
+    }
+
+    int pivot = arr[arr.size() / 2];
+    vector<int> left, middle, right;
+    for (int num : arr) {
+        if (num < pivot)
+            left.push_back(num);
+        else if (num == pivot)
+            middle.push_back(num);
+        else
+            right.push_back(num);
+    }
+
+    thread leftThread(quickSortParallel, ref(left), depth - 1);
+    thread rightThread(quickSortParallel, ref(right), depth - 1);
+
+    leftThread.join();
+    rightThread.join();
+
+    arr.clear();
+    arr.insert(arr.end(), left.begin(), left.end());
+    arr.insert(arr.end(), middle.begin(), middle.end());
+    arr.insert(arr.end(), right.begin(), right.end());
+}
+
+int main() {
+    int n;
+    cout << "Enter the number of elements in the array: ";
+    cin >> n;
+
+    vector<int> arr(n);
+    cout << "Enter the elements of the array:\n";
+    for (int i = 0; i < n; ++i) {
+    cin >> arr[i];
+    }
+
+    vector<int> arrSequential = arr;
+    vector<int> arrParallel = arr;
+
+    auto startSequential = chrono::high_resolution_clock::now();
+    quickSortSequential(arrSequential);
+    auto endSequential = chrono::high_resolution_clock::now();
+    chrono::duration<double> timeSequential = endSequential - startSequential;
+
+    auto startParallel = chrono::high_resolution_clock::now();
+    quickSortParallel(arrParallel, thread::hardware_concurrency());
+    auto endParallel =chrono::high_resolution_clock::now();
+    chrono::duration<double> timeParallel = endParallel - startParallel;
+
+    cout << "Sorted array (sequential):\n";
+    for (int num : arrSequential) {
+    cout << num << " ";
+    }
+    cout << "\nExecution time (sequential): " << timeSequential.count() << " seconds" << endl;
+
+    cout << "\nSorted array (parallel):\n";
+    for (int num : arrParallel) {
+    cout << num << " ";
+    }
+    cout << "\nExecution time (parallel): " << timeParallel.count() << " seconds" << endl;
+
+    return 0;
+}
+

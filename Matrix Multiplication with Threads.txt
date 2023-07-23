@@ -1,0 +1,112 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <random>
+using namespace std;
+vector<vector<int>> generateRandomMatrix(int rows, int cols) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<int> dist(1, 10);
+
+ 
+
+    vector<vector<int>> matrix(rows,vector<int>(cols, 0));
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            matrix[i][j] = dist(gen);
+        }
+    }
+
+ 
+
+    return matrix;
+}
+
+ 
+
+
+void multiplyRows(const vector<vector<int>>& A,
+                  const vector<vector<int>>& B,
+                  vector<vector<int>>& result,
+                  int startRow, int endRow) {
+    int colsA = A[0].size();
+    int colsB = B[0].size();
+
+ 
+
+    for (int i = startRow; i < endRow; ++i) {
+        for (int j = 0; j < colsB; ++j) {
+            for (int k = 0; k < colsA; ++k) {
+                result[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+ 
+
+int main() {
+    int rowsA, colsA, rowsB, colsB;
+    cout << "Enter the dimensions of matrix A (rows cols): ";
+    cin >> rowsA >> colsA;
+    cout << "Enter the dimensions of matrix B (rows cols): ";
+    cin >> rowsB >> colsB;
+
+ 
+
+    if (colsA != rowsB) {
+        cout << "Matrix multiplication is not valid with the given dimensions." <<endl;
+        return 1;
+    }
+
+ 
+
+    vector<vector<int>> A = generateRandomMatrix(rowsA, colsA);
+    vector<vector<int>> B = generateRandomMatrix(rowsB, colsB);
+
+ 
+
+    vector<vector<int>> result(rowsA,vector<int>(colsB, 0));
+
+ 
+
+
+    int numThreads = thread::hardware_concurrency();
+    if (numThreads == 0) {
+        numThreads = 2;
+    }
+
+ 
+
+    vector<thread> threads;
+    int blockSize = rowsA / numThreads;
+    int startRow = 0;
+    for (int i = 0; i < numThreads - 1; ++i) {
+        threads.emplace_back(multiplyRows, ref(A), ref(B), ref(result), startRow, startRow + blockSize);
+        startRow += blockSize;
+    }
+
+ 
+
+    threads.emplace_back(multiplyRows, ref(A),ref(B), ref(result), startRow, rowsA);
+
+ 
+
+
+    for (thread& t : threads) {
+        t.join();
+    }
+
+ 
+    cout << "Resulting matrix:" << endl;
+    for (const auto& row : result) {
+        for (int val : row) {
+            cout << val << ' ';
+        }
+        cout <<endl;
+    }
+
+ 
+
+    return 0;
+}

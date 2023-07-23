@@ -1,0 +1,72 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+// Function to split a string into tokens based on a delimiter
+vector<string> split(const string& str, char delimiter) {
+    vector<string> tokens;
+    stringstream ss(str);
+    string token;
+    while (getline(ss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+ 
+
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        cerr << "Usage: " << argv[0] << " <csv_file_name> <column_index>\n";
+        return 1;
+    }
+
+ 
+
+    string file_name = argv[1];
+    int column_index = stoi(argv[2]);
+
+ 
+
+    ifstream file(file_name);
+    if (!file) {
+        cerr << "Error: Unable to open the file.\n";
+        return 1;
+    }
+
+ 
+
+    string line;
+    vector<vector<string>> data;
+
+ 
+
+    // Read and parse the CSV file
+    while (getline(file, line)) {
+        vector<string> row = split(line, ',');
+        data.push_back(row);
+    }
+
+ 
+
+    // Sort the data based on the specified column
+    sort(data.begin() + 1, data.end(), [column_index](const vector<string>& a, const vector<string>& b) {
+        return a[column_index] < b[column_index];
+    });
+
+ 
+
+    // Print the sorted data
+    for (const auto& row : data) {
+        for (const auto& cell : row) {
+            cout << cell << ",";
+        }
+        cout << "\n";
+    }
+
+ 
+
+    return 0;
+}

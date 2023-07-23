@@ -1,0 +1,101 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <thread>
+#include <mutex>
+
+ 
+
+using namespace std;
+unsigned char toGrayscale(unsigned char r, unsigned char g, unsigned char b) {
+    return 0.3 * r + 0.59 * g + 0.11 * b;
+}
+
+
+void grayscaleFilter(vector<unsigned char>& image, int start, int end) {
+    for (int i = start; i < end; i += 3) {
+        unsigned char gray = toGrayscale(image[i], image[i + 1], image[i + 2]);
+        image[i] = image[i + 1] = image[i + 2] = gray;
+    }
+}
+
+ 
+
+int main() {
+    ifstream inFile("input.pgm", ios::binary);
+    ofstream outFile("output.pgm", ios::binary);
+
+ 
+
+    if (!inFile || !outFile) {
+        cout << "Error opening files.\n";
+        return 1;
+    }
+
+ 
+
+    string format;
+    int width, height, max_gray_value;
+
+ 
+
+
+    inFile >> format >> width >> height >> max_gray_value;
+
+ 
+
+
+    int numPixels = width * height;
+
+ 
+
+
+    vector<unsigned char> imageData(3 * numPixels);
+    inFile.read(reinterpret_cast<char*>(imageData.data()), imageData.size());
+
+ 
+
+    int numThreads = thread::hardware_concurrency();
+    if (numThreads == 0) {
+        numThreads = 2;
+    }
+
+ 
+
+    int pixelsPerThread = numPixels / numThreads;
+
+ 
+
+    vector<thread> threads;
+
+ 
+
+   vector<pair<int, int>> threadRanges(numThreads);
+
+ 
+
+    for (int i = 0; i < numThreads; ++i) {
+        int start = i * pixelsPerThread * 3;
+        int end = (i == numThreads - 1) ? imageData.size() : start + pixelsPerThread * 3;
+        threadRanges[i] = {start, end};
+        threads.emplace_back(grayscaleFilter,ref(imageData), start, end);
+    }
+
+ 
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    outFile << format << "\n";
+    outFile << width << " " << height << "\n";
+    outFile << max_gray_value << "\n";
+    outFile.write(reinterpret_cast<const char*>(imageData.data()), imageData.size());
+
+ 
+
+    cout << "Grayscale filter applied successfully!\n";
+
+ 
+
+    return 0;
+}
